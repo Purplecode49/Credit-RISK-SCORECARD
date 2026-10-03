@@ -1,0 +1,323 @@
+<title>Credit Risk Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one scroll. Headline loss figure first, KPI strip, then four panels (loss by band, stress, drift, model benchmark). */
+:root {
+  --surface: #fcfcfb;
+  --panel: #ffffff;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --ink3: #7a7975;
+  --grid: #e8e7e3;
+  --accent: #2a78d6;
+  --accent-soft: #cde2fb;
+  --accent-deep: #184f95;
+  --muted-series: #9a9993;
+  --good: #1f7a4d;
+  --warn: #a96a07;
+  --crit: #b3372b;
+  --shade: rgba(42, 120, 214, 0.07);
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #111317; --panel: #171a1f; --ink: #ecebe8; --ink2: #a8a7a2; --ink3: #85847f; --grid: #262a31;
+    --accent: #6da7ec; --accent-soft: #1c3552; --accent-deep: #9ec5f4; --muted-series: #85847f;
+    --good: #5cc08d; --warn: #e0a645; --crit: #ee7d70; --shade: rgba(109, 167, 236, 0.09);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --surface: #111317; --panel: #171a1f; --ink: #ecebe8; --ink2: #a8a7a2; --ink3: #85847f; --grid: #262a31;
+  --accent: #6da7ec; --accent-soft: #1c3552; --accent-deep: #9ec5f4; --muted-series: #85847f;
+  --good: #5cc08d; --warn: #e0a645; --crit: #ee7d70; --shade: rgba(109, 167, 236, 0.09);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--surface); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 16px; font-weight: 600; }
+.sub { color: var(--ink2); margin: 4px 0 0; max-width: 70ch; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); font-weight: 500; }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 12px; color: var(--ink2); border: 1px solid var(--grid); border-radius: 999px; padding: 3px 10px; background: var(--panel); white-space: nowrap; }
+
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.9fr); gap: 20px; align-items: stretch; }
+.hero-fig { padding-block: 4px; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.hero-fig .big { font-size: 56px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.hero-fig .big small { font-size: 22px; color: var(--ink2); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+.hero-fig p { margin: 0; color: var(--ink2); max-width: 36ch; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tile .lab { font-size: 12px; color: var(--ink2); }
+.tile .val { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+.tile .note { font-size: 12px; color: var(--ink3); }
+
+.panel { background: var(--panel); border: 1px solid var(--grid); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.panel-head { display: flex; flex-direction: column; gap: 4px; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.finding { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--ink); max-width: 80ch; }
+.finding b { font-weight: 600; }
+
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: right; font-weight: 500; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink3); padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--grid); font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:first-child { font-family: var(--sans); }
+tr:last-child td { border-bottom: none; }
+.barcell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.bar { height: 10px; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bar-track { width: 110px; display: flex; justify-content: flex-start; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; font-family: var(--sans); }
+.pill.good { color: var(--good); } .pill.warn { color: var(--warn); } .pill.crit { color: var(--crit); }
+
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--sans); font-size: 11px; fill: var(--ink2); }
+.chart .tick { stroke: var(--grid); stroke-width: 1; }
+.chart .axis-text { fill: var(--ink3); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--ink2); }
+.legend i { display: inline-block; width: 14px; height: 2px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); font-size: 12px; padding: 6px 9px; border-radius: 6px; line-height: 1.4; white-space: nowrap; z-index: 5; opacity: 0; transition: opacity .08s; }
+.tip.on { opacity: 1; }
+
+.stress-row { display: grid; grid-template-columns: 78px minmax(0, 1fr) 150px; gap: 12px; align-items: center; }
+.stress-row .track { height: 22px; background: var(--grid); border-radius: 0 4px 4px 0; position: relative; }
+.stress-row .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.stress-row .v { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.stress-row .v span { color: var(--ink3); }
+.stress-list { display: flex; flex-direction: column; gap: 12px; }
+.defs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 20px; font-size: 12px; color: var(--ink2); }
+.defs b { color: var(--ink); font-weight: 500; }
+.foot { font-size: 12px; color: var(--ink3); max-width: 90ch; }
+
+@media (max-width: 860px) {
+  .hero, .cols { grid-template-columns: minmax(0, 1fr); }
+  .defs { grid-template-columns: minmax(0, 1fr); }
+  .hero-fig .big { font-size: 48px; }
+}
+@media (max-width: 520px) {
+  .stress-row { grid-template-columns: 62px minmax(0, 1fr); }
+  .stress-row .v { grid-column: 1 / -1; text-align: left; }
+  .panel { padding: 16px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Credit risk scorecard and portfolio monitoring</div>
+      <h1>Hold-out portfolio at origination</h1>
+      <p class="sub" id="sub-top"></p>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-fig">
+      <div class="eyebrow">12-month expected loss, base case</div>
+      <div class="big mono" id="hero-el"></div>
+      <p id="hero-sub"></p>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Where the expected loss sits</h2>
+      <p class="sub">Expected loss is PD × LGD × EAD for each loan, added up by score band. Low scores are a small part of the exposure and a large part of the loss.</p>
+    </div>
+    <div class="scroll"><table id="band-table"></table></div>
+    <p class="foot">PD is the scorecard PD converted to a 12-month figure. LGD is assumed at 65% for cash loans and 75% for revolving loans, plus 5 points for the largest quarter of loans. EAD is the full credit amount at origination for cash loans, and limit × (50% drawn + 50% of the undrawn half × 75% CCF) for revolving loans. The loan term used for the 12-month conversion comes from the annuity at an assumed 22% interest rate.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Stress test</h2>
+      <p class="sub">Each scenario lowers every score, which raises PD (20 points doubles the odds of default), and adds to LGD and to the share of revolving limits drawn.</p>
+    </div>
+    <div class="stress-list" id="stress"></div>
+    <div id="stress-where" class="foot"></div>
+    <h3 style="font-size:13px; font-weight:600; margin-top:4px">If the LGD and CCF assumptions are wrong</h3>
+    <div class="scroll"><table id="sens-table"></table></div>
+    <p class="foot">12-month expected loss in millions with today's PDs. LGD low and high are 15 points below and above the central case. CCF is the share of the unused revolving limit that gets drawn before default (60%, 75%, 90%). The LGD assumption matters far more than the CCF.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Drift monitoring <span class="pill warn" style="margin-left:8px">Simulated</span></h2>
+      <p class="sub">PSI compares who is applying now with who the scorecard was built on. The data has no dates, so the monthly charts use twelve simulated months of 3,000 loans each, drawn from the hold-out. The table at the bottom is the real hold-out check.</p>
+    </div>
+    <p class="finding" id="finding"></p>
+    <div class="cols">
+      <div style="min-width:0; display:flex; flex-direction:column; gap:10px">
+        <h3 style="font-size:13px; font-weight:600">Predicted and actual default rate, simulated months</h3>
+        <div class="legend" id="legend1"></div>
+        <div class="chart" id="chart-rate"></div>
+      </div>
+      <div style="min-width:0; display:flex; flex-direction:column; gap:10px">
+        <h3 style="font-size:13px; font-weight:600">PSI by simulated month: score and the input that moved</h3>
+        <div class="legend" id="legend2"></div>
+        <div class="chart" id="chart-psi"></div>
+      </div>
+    </div>
+    <div class="scroll"><table id="feat-table"></table></div>
+    <div class="defs">
+      <div><b>PSI below 0.10</b> Stable. The mix of applicants matches the build sample.</div>
+      <div><b>PSI 0.10 to 0.25</b> Watch. Find out which inputs moved.</div>
+      <div><b>PSI above 0.25</b> Major shift. Review the scorecard.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Scorecard against gradient boosting</h2>
+      <p class="sub">Same random split. Boosting settings were chosen on a random fifth of the training set; the hold-out was used once.</p>
+    </div>
+    <div class="scroll"><table id="model-table"></table></div>
+    <p class="foot" id="model-note"></p>
+  </section>
+</div>
+<div id="tip" class="tip"></div>
+
+<script>
+const D = /*__DATA__*/null;
+const $ = (id) => document.getElementById(id);
+const f1 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 1, maximumFractionDigits: 1});
+const f2 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const f4 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 4, maximumFractionDigits: 4});
+const f3 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 3, maximumFractionDigits: 3});
+const n0 = (x) => Math.round(x).toLocaleString("en-US");
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const mlabel = (s) => "Sim " + (+s.slice(1));
+const statusClass = (s) => s === "Stable" ? "good" : (s === "Watch" ? "warn" : "crit");
+const pill = (s) => `<span class="pill ${statusClass(s)}">${s === "Stable" ? "&#10003;" : "&#9650;"} ${s}</span>`;
+
+/* ---------- header, hero, tiles ---------- */
+const base = D.stress[0], sev = D.stress[2];
+const A = D.assump;
+$("sub-top").textContent = `${n0(D.n_test)} real Home Credit applicants held back from model building (a random 30%), scored by a WOE logistic scorecard trained on the other ${n0(D.n_train)}. Loans are viewed at origination because the data has no dates. The drift panel is a simulation.`;
+$("chips").innerHTML = [`Score scale: 600 points at 50:1 odds`, `+20 points doubles the odds`, `Random 70/30 split`].map(t => `<span class="chip">${t}</span>`).join("");
+$("hero-el").innerHTML = `${f1(base.expected_loss_m)}<small>m</small>`;
+$("hero-sub").textContent = `${f2(base.EL_rate_pct)}% of the ${n0(base.total_ead_m)}m still exposed over the next 12 months. The severe stress takes it to ${f1(sev.expected_loss_m)}m.`;
+const lastM = D.monthly[D.monthly.length - 1];
+const te = D.metrics.test;
+const totalPsi = D.score_psi_test;
+const tiles = [
+  ["12-month PD, average", `${f1(D.pd12_avg)}%`, `Lifetime ${f1(D.calib.before)}% predicted, ${f1(D.calib.actual)}% actual`],
+  ["Hold-out AUC", f3(te.AUC), `Gini ${f3(te.Gini)}, KS ${f3(te.KS)}`],
+  ["Score PSI, hold-out vs training", f4(totalPsi), pill(totalPsi < .1 ? "Stable" : totalPsi < .25 ? "Watch" : "Major shift")],
+  ["Expected loss in the two lowest bands", `${f1(D.low_share_el)}%`, `of the total, from ${f1(D.low_share_loans)}% of the loans`],
+];
+$("tiles").innerHTML = tiles.map(t => `<div class="tile"><span class="lab">${t[0]}</span><span class="val mono">${t[1]}</span><span class="note">${t[2]}</span></div>`).join("");
+
+/* ---------- band table ---------- */
+const maxEL = Math.max(...D.bands.map(b => b.expected_loss_m));
+$("band-table").innerHTML = `<thead><tr><th>Score band</th><th>Loans</th><th>Avg PD, 12m</th><th>EAD (m)</th><th>Expected loss (m)</th><th>Loss rate</th><th>Share of loss</th></tr></thead><tbody>` +
+  D.bands.map(b => `<tr><td>${b.band}</td><td>${n0(b.loans)}</td><td>${f1(b.avg_pd_pct)}%</td><td>${f1(b.ead_m)}</td>
+  <td><div class="barcell"><div class="bar-track"><div class="bar" style="width:${100 * b.expected_loss_m / maxEL}%"></div></div><span>${f2(b.expected_loss_m)}</span></div></td>
+  <td>${f2(b.EL_rate_pct)}%</td><td>${f1(b.share_of_EL_pct)}%</td></tr>`).join("") +
+  `<tr><td><b>Total</b></td><td>${n0(D.bands.reduce((a, b) => a + b.loans, 0))}</td><td>${f1(D.pd12_avg)}%</td><td>${n0(base.total_ead_m)}</td><td><b>${f2(base.expected_loss_m)}</b></td><td>${f2(base.EL_rate_pct)}%</td><td>100.0%</td></tr></tbody>`;
+
+/* ---------- stress ---------- */
+const maxS = Math.max(...D.stress.map(s => s.expected_loss_m));
+$("stress").innerHTML = D.stress.map(s => `<div class="stress-row"><div><b>${s.scenario}</b><div class="foot">${s.score_shift === 0 ? "No change" : s.score_shift + " pts, LGD +" + s.lgd_add_on_pp + " pp"}</div></div>
+  <div class="track"><div class="fill" style="width:${100 * s.expected_loss_m / maxS}%; opacity:${s.scenario === "Base" ? 0.55 : s.scenario === "Moderate" ? 0.8 : 1}"></div></div>
+  <div class="v">${f1(s.expected_loss_m)}m <span>${s.EL_vs_base_pct === 0 ? "" : "+" + Math.round(s.EL_vs_base_pct) + "%"}</span></div></div>`).join("");
+const sg = (l, c) => D.sens.find(x => x.lgd_case === l && x.ccf_case === c);
+$("sens-table").innerHTML = `<thead><tr><th>LGD case</th><th>CCF low</th><th>CCF central</th><th>CCF high</th></tr></thead><tbody>` +
+  ["low", "central", "high"].map(l => `<tr><td>${l[0].toUpperCase() + l.slice(1)}</td>` + ["low", "central", "high"].map(c => `<td${l === "central" && c === "central" ? ' style="font-weight:600"' : ""}>${f1(sg(l, c).expected_loss_m)}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
+$("stress-where").textContent = `Under the severe case, ${f1(D.sev_mid_share)}% of the extra loss lands in the 500 to 579 bands, the middle of the book.`;
+
+/* ---------- drift charts ---------- */
+const DF = D.drift_feature;
+const T = D.monthly.filter(m => m.dataset === "drifting");
+const dTest = T.map(m => D.drift_psi[m.month]);
+const nOver = dTest.filter(v => v >= 0.10).length;
+const scoreOver = T.filter(m => m.score_psi >= 0.10).length;
+$("finding").innerHTML = `<b>Simulation:</b> from month 7 the applicants are tilted toward low ${DF} values, and in months 10 to 12 extra defaults are added. The input check catches it first: ${DF} PSI reaches ${f3(Math.max(...dTest))}, over the 0.10 watch line in ${nOver} of 6 months, while the score PSI reaches ${f3(D.score_psi_max)}, over the line in ${scoreOver}. The predicted-against-actual gap opens last, to ${f1(T[T.length - 1].gap_pp)} points in month 12, which only the labels reveal. <b>Real check:</b> the hold-out against the training set gives a score PSI of ${f4(D.score_psi_test)}, as it should for two random halves of one population.`;
+$("legend1").innerHTML = `<span><i style="background:var(--accent)"></i>Actual default rate</span><span><i style="background:var(--muted-series)"></i>Predicted PD (scorecard)</span><span><i style="background:var(--shade); height:10px; width:14px; border-radius:2px; vertical-align:-1px"></i>Simulated shift</span>`;
+$("legend2").innerHTML = `<span><i style="background:var(--accent)"></i>${DF}</span><span><i style="background:var(--muted-series)"></i>Score</span><span><i style="background:var(--warn)"></i>Watch line, 0.10</span>`;
+
+const tip = $("tip");
+function showTip(host, x, y, html) {
+  const r = host.getBoundingClientRect(), t = tip;
+  t.innerHTML = html; t.classList.add("on");
+  const px = r.left + window.scrollX + x, py = r.top + window.scrollY + y;
+  tip.style.left = Math.min(Math.max(px + 12, 8), document.documentElement.clientWidth - t.offsetWidth - 8) + "px";
+  tip.style.top = (py - 8 - t.offsetHeight) + "px";
+}
+const hideTip = () => tip.classList.remove("on");
+
+function setup(host, W, H, m) {
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  return {iw, ih, X: (i, n) => m.l + (iw * (i + 0.5)) / n, Y: (v, lo, hi) => m.t + ih - ((v - lo) / (hi - lo)) * ih};
+}
+
+function drawRate() {
+  const host = $("chart-rate"), W = Math.max(host.clientWidth, 280), H = 250, m = {l: 34, r: 12, t: 10, b: 28};
+  const mo = D.monthly, n = mo.length, {iw, ih, X, Y} = setup(host, W, H, m), lo = Math.floor(Math.min(...mo.map(d => Math.min(d.avg_pd_pct, d.actual_default_rate_pct))) / 2) * 2, hi = Math.ceil(Math.max(...mo.map(d => Math.max(d.avg_pd_pct, d.actual_default_rate_pct))) / 2) * 2;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Predicted and actual default rate by month">`;
+  const t0 = mo.findIndex(x => x.dataset === "drifting");
+  const bw = iw / n;
+  s += `<rect x="${m.l + t0 * bw}" y="${m.t}" width="${bw * (n - t0)}" height="${ih}" fill="var(--shade)"/>`;
+  for (let v = lo; v <= hi; v += 2) s += `<line class="tick" x1="${m.l}" x2="${W - m.r}" y1="${Y(v, lo, hi)}" y2="${Y(v, lo, hi)}"/><text class="axis-text" x="${m.l - 6}" y="${Y(v, lo, hi) + 4}" text-anchor="end">${v}%</text>`;
+  const path = (key) => mo.map((d, i) => `${i ? "L" : "M"}${X(i, n).toFixed(1)},${Y(d[key], lo, hi).toFixed(1)}`).join("");
+  s += `<path d="${path("avg_pd_pct")}" fill="none" stroke="var(--muted-series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<path d="${path("actual_default_rate_pct")}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const last = mo[n - 1];
+  s += `<circle cx="${X(n - 1, n)}" cy="${Y(last.actual_default_rate_pct, lo, hi)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/>`;
+  s += `<circle cx="${X(n - 1, n)}" cy="${Y(last.avg_pd_pct, lo, hi)}" r="4" fill="var(--muted-series)" stroke="var(--panel)" stroke-width="2"/>`;
+  mo.forEach((d, i) => { if (i % 3 === 0) s += `<text class="axis-text" x="${X(i, n)}" y="${H - 8}" text-anchor="middle">${mlabel(d.month)}</text>`; });
+  mo.forEach((d, i) => s += `<rect data-i="${i}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`);
+  s += `</svg>`;
+  host.innerHTML = s + "";
+  host.querySelectorAll("rect[data-i]").forEach(r => {
+    const mv = (e) => { const d = mo[+r.dataset.i], b = host.getBoundingClientRect(); showTip(host, e.clientX - b.left, Y(d.actual_default_rate_pct, lo, hi) * (host.clientHeight / H), `<b>${mlabel(d.month)}</b> (${d.dataset})<br>Actual ${f1(d.actual_default_rate_pct)}%<br>Predicted ${f1(d.avg_pd_pct)}%<br>${n0(d.applications)} loans`); };
+    r.addEventListener("mousemove", mv); r.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function drawPsi() {
+  const host = $("chart-psi"), W = Math.max(host.clientWidth, 280), H = 250, m = {l: 40, r: 12, t: 10, b: 28};
+  const mo = D.monthly, n = mo.length, {iw, ih, X, Y} = setup(host, W, H, m), lo = 0, hi = Math.max(0.30, Math.ceil(Math.max(...mo.map(d => D.drift_psi[d.month])) * 10) / 10), bw = iw / n;
+  const cir = mo.map(d => D.drift_psi[d.month]);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="PSI by simulated month for the score and one input">`;
+  const t0 = mo.findIndex(x => x.dataset === "drifting");
+  s += `<rect x="${m.l + t0 * bw}" y="${m.t}" width="${bw * (n - t0)}" height="${ih}" fill="var(--shade)"/>`;
+  Array.from({length: Math.round(hi / 0.1) + 1}, (_, k) => k / 10).forEach(v => s += `<line class="tick" x1="${m.l}" x2="${W - m.r}" y1="${Y(v, lo, hi)}" y2="${Y(v, lo, hi)}"/><text class="axis-text" x="${m.l - 6}" y="${Y(v, lo, hi) + 4}" text-anchor="end">${v.toFixed(2)}</text>`);
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(0.10, lo, hi)}" y2="${Y(0.10, lo, hi)}" stroke="var(--warn)" stroke-width="1.5"/>`;
+  const path = (arr) => arr.map((v, i) => `${i ? "L" : "M"}${X(i, n).toFixed(1)},${Y(v, lo, hi).toFixed(1)}`).join("");
+  s += `<path d="${path(mo.map(d => d.score_psi))}" fill="none" stroke="var(--muted-series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<path d="${path(cir)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<circle cx="${X(n - 1, n)}" cy="${Y(cir[n - 1], lo, hi)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/><circle cx="${X(n - 1, n)}" cy="${Y(mo[n - 1].score_psi, lo, hi)}" r="4" fill="var(--muted-series)" stroke="var(--panel)" stroke-width="2"/>`;
+  mo.forEach((d, i) => { if (i % 3 === 0) s += `<text class="axis-text" x="${X(i, n)}" y="${H - 8}" text-anchor="middle">${mlabel(d.month)}</text>`; });
+  mo.forEach((d, i) => s += `<rect data-i="${i}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`);
+  host.innerHTML = s + `</svg>`;
+  host.querySelectorAll("rect[data-i]").forEach(r => {
+    const mv = (e) => { const d = mo[+r.dataset.i], b = host.getBoundingClientRect(), v = cir[+r.dataset.i]; showTip(host, e.clientX - b.left, Y(v, lo, hi) * (host.clientHeight / H), `<b>${mlabel(d.month)}</b><br>${DF} PSI ${f3(v)}<br>Score PSI ${f3(d.score_psi)}`); };
+    r.addEventListener("mousemove", mv); r.addEventListener("mouseleave", hideTip);
+  });
+}
+function drawAll() { drawRate(); drawPsi(); }
+drawAll();
+let rz; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(drawAll, 80); }).observe(document.querySelector(".wrap"));
+
+/* ---------- feature PSI + model tables ---------- */
+$("feat-table").innerHTML = `<thead><tr><th>Scorecard feature</th><th>PSI, hold-out vs training (real)</th><th>Highest simulated month</th><th>Simulated months over 0.10</th><th>Status</th></tr></thead><tbody>` +
+  D.features.map(f => `<tr><td>${f.feature}</td><td>${f4(f.psi_whole)}</td><td>${f3(f.max_test)}</td><td>${f.months_over} of 6</td><td style="text-align:right">${pill(f.status)}</td></tr>`).join("") + `</tbody>`;
+$("model-note").textContent = D.model_note;
+const best = Math.max(...D.models.map(m => m.test_AUC));
+$("model-table").innerHTML = `<thead><tr><th>Model</th><th>Train AUC</th><th>Test AUC</th><th>Test Gini</th><th>Test KS</th></tr></thead><tbody>` +
+  D.models.map(m => `<tr><td>${m.model}</td><td>${f3(m.train_AUC)}</td><td>${f3(m.test_AUC)}</td><td>${f3(m.test_Gini)}</td><td>${f3(m.test_KS)}</td></tr>`).join("") + `</tbody>`;
+</script>

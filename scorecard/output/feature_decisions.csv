@@ -1,0 +1,40 @@
+feature,iv,decision,reason
+EXT_SOURCE_3,0.3355514848894005,kept,
+EXT_SOURCE_2,0.3010688481530949,kept,
+EXT_SOURCE_1,0.13952566091232,kept,
+YEARS_EMPLOYED,0.1151218762169839,kept,
+AGE_YEARS,0.082158960720174,kept,
+prev_refusal_rate,0.068113766905864,kept,
+inst_late_share,0.0652575249861246,kept,
+inst_recent3_late_share,0.0622989594100119,kept,
+prev_n_refused,0.0550597859109612,dropped,overlaps with prev_refusal_rate (correlation 0.82); prev_refusal_rate has the higher IV
+bureau_utilisation,0.053981858195995,kept,
+inst_avg_days_late,0.0528071209668925,dropped,overlaps with inst_late_share (correlation 0.89); inst_late_share has the higher IV
+inst_short_share,0.0524212337044553,dropped,overlaps with inst_late_share (correlation 0.83); inst_late_share has the higher IV
+bureau_n_recent_loans,0.0519346537604004,kept,
+NAME_EDUCATION_TYPE,0.0501496223053364,kept,
+inst_max_days_late,0.0407277313738129,dropped,overlaps with inst_late_share (correlation 0.80); inst_late_share has the higher IV
+inst_n_late,0.0382072628643203,dropped,overlaps with inst_late_share (correlation 0.83); inst_late_share has the higher IV
+prev_last_refused,0.0374423809188439,kept,
+AMT_CREDIT,0.0324573190326558,kept,
+not_employed_flag,0.0323688535495316,kept,
+bureau_n_active,0.0254163630790628,kept,
+NAME_CONTRACT_TYPE,0.0152287517988306,dropped,IV 0.015 is below 0.02: barely separates good from bad
+prev_approved_credit,0.0146780896530412,dropped,IV 0.015 is below 0.02: barely separates good from bad
+AMT_ANNUITY,0.0130764417998594,dropped,IV 0.013 is below 0.02: barely separates good from bad
+bureau_n_loans,0.0128483879438524,dropped,IV 0.013 is below 0.02: barely separates good from bad
+prev_n_approved,0.0127611039563286,dropped,IV 0.013 is below 0.02: barely separates good from bad
+bureau_max_overdue_days,0.011664228915997,dropped,IV 0.012 is below 0.02: barely separates good from bad
+has_bureau,0.011664228915997,dropped,IV 0.012 is below 0.02: barely separates good from bad
+prev_n_apps,0.0104740696309769,dropped,IV 0.010 is below 0.02: barely separates good from bad
+bureau_active_debt,0.0096116507492566,dropped,IV 0.010 is below 0.02: barely separates good from bad
+AMT_INCOME_TOTAL,0.0094470529543645,dropped,IV 0.009 is below 0.02: barely separates good from bad
+annuity_income_ratio,0.0063253354986794,dropped,IV 0.006 is below 0.02: barely separates good from bad
+prev_n_canceled,0.0052131098956112,dropped,IV 0.005 is below 0.02: barely separates good from bad
+has_prev,0.0050440260891437,dropped,IV 0.005 is below 0.02: barely separates good from bad
+has_payments,0.0047621939420499,dropped,IV 0.005 is below 0.02: barely separates good from bad
+inst_n_payments,0.0045073885950559,dropped,IV 0.005 is below 0.02: barely separates good from bad
+credit_income_ratio,0.0035540605926169,dropped,IV 0.004 is below 0.02: barely separates good from bad
+bureau_active_credit,0.0012958552083557,dropped,IV 0.001 is below 0.02: barely separates good from bad
+bureau_n_overdue,6.888880561333299e-10,dropped,IV 0.000 is below 0.02: barely separates good from bad
+bureau_sum_overdue_amt,6.888880561333299e-10,dropped,IV 0.000 is below 0.02: barely separates good from bad

@@ -1,0 +1,35 @@
+{
+ "view": "origination",
+ "annual_rate": 0.22,
+ "lgd_central": {
+  "Cash loans": 0.65,
+  "Revolving loans": 0.75
+ },
+ "lgd_band_pp": 0.15,
+ "big_loan_add": 0.05,
+ "revolving_drawn_share": 0.5,
+ "ccf": {
+  "low": 0.6,
+  "central": 0.75,
+  "high": 0.9
+ },
+ "revolving_horizon_months": 24,
+ "recalibration_logit_shift": 0.0,
+ "scenarios": {
+  "Base": [
+   0,
+   0.0,
+   0.75
+  ],
+  "Moderate": [
+   -10,
+   0.05,
+   0.85
+  ],
+  "Severe": [
+   -20,
+   0.1,
+   1.0
+  ]
+ }
+}

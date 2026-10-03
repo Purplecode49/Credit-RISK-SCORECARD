@@ -1,0 +1,4 @@
+measure,test_pct,expected_defaults
+average PD from the scorecard,8.095315,7468.25204
+after recalibration,8.095315,7468.25204
+actual default rate,8.073363,7448.0

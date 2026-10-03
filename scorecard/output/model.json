@@ -1,0 +1,47 @@
+{
+ "features": [
+  "EXT_SOURCE_3",
+  "EXT_SOURCE_2",
+  "EXT_SOURCE_1",
+  "YEARS_EMPLOYED",
+  "prev_refusal_rate",
+  "inst_late_share",
+  "inst_recent3_late_share",
+  "bureau_utilisation",
+  "NAME_EDUCATION_TYPE",
+  "not_employed_flag",
+  "bureau_n_active"
+ ],
+ "intercept": -2.4349599302358316,
+ "weights": {
+  "EXT_SOURCE_3": -0.7210137572505996,
+  "EXT_SOURCE_2": -0.8217043569829471,
+  "EXT_SOURCE_1": -0.5847396096523201,
+  "YEARS_EMPLOYED": -0.6186112138248506,
+  "prev_refusal_rate": -0.49898045497829563,
+  "inst_late_share": -0.4331355911060284,
+  "inst_recent3_late_share": -0.4893112197204025,
+  "bureau_utilisation": -0.5415444788206649,
+  "NAME_EDUCATION_TYPE": -0.7726096037772595,
+  "not_employed_flag": -0.11733482503654073,
+  "bureau_n_active": -0.5273900939141434
+ },
+ "removed": [
+  [
+   "AGE_YEARS",
+   "p-value 0.970 above 0.05"
+  ],
+  [
+   "bureau_n_recent_loans",
+   "p-value 0.489 above 0.05"
+  ],
+  [
+   "prev_last_refused",
+   "p-value 0.147 above 0.05"
+  ],
+  [
+   "AMT_CREDIT",
+   "p-value 0.064 above 0.05"
+  ]
+ ]
+}

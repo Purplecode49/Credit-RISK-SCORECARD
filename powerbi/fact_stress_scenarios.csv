@@ -1,0 +1,4 @@
+scenario,score_shift,lgd_add_on_pp,revolving_ccf,avg_pd_pct,total_ead_m,expected_loss_m,EL_rate_pct,EL_vs_base_pct
+Base,0,0.0,0.75,4.408144,54988.589394,1222.24229,2.22272,0.0
+Moderate,-10,5.0,0.85,5.926299,55128.050019,1780.212075,3.229231,45.651324
+Severe,-20,10.0,1.0,7.866439,55337.240956,2554.071504,4.615466,108.966056

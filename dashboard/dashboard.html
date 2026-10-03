@@ -1,0 +1,323 @@
+<title>Credit Risk Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one scroll. Headline loss figure first, KPI strip, then four panels (loss by band, stress, drift, model benchmark). */
+:root {
+  --surface: #fcfcfb;
+  --panel: #ffffff;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --ink3: #7a7975;
+  --grid: #e8e7e3;
+  --accent: #2a78d6;
+  --accent-soft: #cde2fb;
+  --accent-deep: #184f95;
+  --muted-series: #9a9993;
+  --good: #1f7a4d;
+  --warn: #a96a07;
+  --crit: #b3372b;
+  --shade: rgba(42, 120, 214, 0.07);
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface: #111317; --panel: #171a1f; --ink: #ecebe8; --ink2: #a8a7a2; --ink3: #85847f; --grid: #262a31;
+    --accent: #6da7ec; --accent-soft: #1c3552; --accent-deep: #9ec5f4; --muted-series: #85847f;
+    --good: #5cc08d; --warn: #e0a645; --crit: #ee7d70; --shade: rgba(109, 167, 236, 0.09);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --surface: #111317; --panel: #171a1f; --ink: #ecebe8; --ink2: #a8a7a2; --ink3: #85847f; --grid: #262a31;
+  --accent: #6da7ec; --accent-soft: #1c3552; --accent-deep: #9ec5f4; --muted-series: #85847f;
+  --good: #5cc08d; --warn: #e0a645; --crit: #ee7d70; --shade: rgba(109, 167, 236, 0.09);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--surface); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 16px; font-weight: 600; }
+.sub { color: var(--ink2); margin: 4px 0 0; max-width: 70ch; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); font-weight: 500; }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 12px; color: var(--ink2); border: 1px solid var(--grid); border-radius: 999px; padding: 3px 10px; background: var(--panel); white-space: nowrap; }
+
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.9fr); gap: 20px; align-items: stretch; }
+.hero-fig { padding-block: 4px; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.hero-fig .big { font-size: 56px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.hero-fig .big small { font-size: 22px; color: var(--ink2); font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+.hero-fig p { margin: 0; color: var(--ink2); max-width: 36ch; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--grid); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tile .lab { font-size: 12px; color: var(--ink2); }
+.tile .val { font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+.tile .note { font-size: 12px; color: var(--ink3); }
+
+.panel { background: var(--panel); border: 1px solid var(--grid); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.panel-head { display: flex; flex-direction: column; gap: 4px; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.finding { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--ink); max-width: 80ch; }
+.finding b { font-weight: 600; }
+
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: right; font-weight: 500; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink3); padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--grid); font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td:first-child { font-family: var(--sans); }
+tr:last-child td { border-bottom: none; }
+.barcell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.bar { height: 10px; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bar-track { width: 110px; display: flex; justify-content: flex-start; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; font-family: var(--sans); }
+.pill.good { color: var(--good); } .pill.warn { color: var(--warn); } .pill.crit { color: var(--crit); }
+
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--sans); font-size: 11px; fill: var(--ink2); }
+.chart .tick { stroke: var(--grid); stroke-width: 1; }
+.chart .axis-text { fill: var(--ink3); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12px; color: var(--ink2); }
+.legend i { display: inline-block; width: 14px; height: 2px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); font-size: 12px; padding: 6px 9px; border-radius: 6px; line-height: 1.4; white-space: nowrap; z-index: 5; opacity: 0; transition: opacity .08s; }
+.tip.on { opacity: 1; }
+
+.stress-row { display: grid; grid-template-columns: 78px minmax(0, 1fr) 150px; gap: 12px; align-items: center; }
+.stress-row .track { height: 22px; background: var(--grid); border-radius: 0 4px 4px 0; position: relative; }
+.stress-row .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.stress-row .v { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.stress-row .v span { color: var(--ink3); }
+.stress-list { display: flex; flex-direction: column; gap: 12px; }
+.defs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 20px; font-size: 12px; color: var(--ink2); }
+.defs b { color: var(--ink); font-weight: 500; }
+.foot { font-size: 12px; color: var(--ink3); max-width: 90ch; }
+
+@media (max-width: 860px) {
+  .hero, .cols { grid-template-columns: minmax(0, 1fr); }
+  .defs { grid-template-columns: minmax(0, 1fr); }
+  .hero-fig .big { font-size: 48px; }
+}
+@media (max-width: 520px) {
+  .stress-row { grid-template-columns: 62px minmax(0, 1fr); }
+  .stress-row .v { grid-column: 1 / -1; text-align: left; }
+  .panel { padding: 16px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Credit risk scorecard and portfolio monitoring</div>
+      <h1>Hold-out portfolio at origination</h1>
+      <p class="sub" id="sub-top"></p>
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-fig">
+      <div class="eyebrow">12-month expected loss, base case</div>
+      <div class="big mono" id="hero-el"></div>
+      <p id="hero-sub"></p>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Where the expected loss sits</h2>
+      <p class="sub">Expected loss is PD × LGD × EAD for each loan, added up by score band. Low scores are a small part of the exposure and a large part of the loss.</p>
+    </div>
+    <div class="scroll"><table id="band-table"></table></div>
+    <p class="foot">PD is the scorecard PD converted to a 12-month figure. LGD is assumed at 65% for cash loans and 75% for revolving loans, plus 5 points for the largest quarter of loans. EAD is the full credit amount at origination for cash loans, and limit × (50% drawn + 50% of the undrawn half × 75% CCF) for revolving loans. The loan term used for the 12-month conversion comes from the annuity at an assumed 22% interest rate.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Stress test</h2>
+      <p class="sub">Each scenario lowers every score, which raises PD (20 points doubles the odds of default), and adds to LGD and to the share of revolving limits drawn.</p>
+    </div>
+    <div class="stress-list" id="stress"></div>
+    <div id="stress-where" class="foot"></div>
+    <h3 style="font-size:13px; font-weight:600; margin-top:4px">If the LGD and CCF assumptions are wrong</h3>
+    <div class="scroll"><table id="sens-table"></table></div>
+    <p class="foot">12-month expected loss in millions with today's PDs. LGD low and high are 15 points below and above the central case. CCF is the share of the unused revolving limit that gets drawn before default (60%, 75%, 90%). The LGD assumption matters far more than the CCF.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Drift monitoring <span class="pill warn" style="margin-left:8px">Simulated</span></h2>
+      <p class="sub">PSI compares who is applying now with who the scorecard was built on. The data has no dates, so the monthly charts use twelve simulated months of 3,000 loans each, drawn from the hold-out. The table at the bottom is the real hold-out check.</p>
+    </div>
+    <p class="finding" id="finding"></p>
+    <div class="cols">
+      <div style="min-width:0; display:flex; flex-direction:column; gap:10px">
+        <h3 style="font-size:13px; font-weight:600">Predicted and actual default rate, simulated months</h3>
+        <div class="legend" id="legend1"></div>
+        <div class="chart" id="chart-rate"></div>
+      </div>
+      <div style="min-width:0; display:flex; flex-direction:column; gap:10px">
+        <h3 style="font-size:13px; font-weight:600">PSI by simulated month: score and the input that moved</h3>
+        <div class="legend" id="legend2"></div>
+        <div class="chart" id="chart-psi"></div>
+      </div>
+    </div>
+    <div class="scroll"><table id="feat-table"></table></div>
+    <div class="defs">
+      <div><b>PSI below 0.10</b> Stable. The mix of applicants matches the build sample.</div>
+      <div><b>PSI 0.10 to 0.25</b> Watch. Find out which inputs moved.</div>
+      <div><b>PSI above 0.25</b> Major shift. Review the scorecard.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Scorecard against gradient boosting</h2>
+      <p class="sub">Same random split. Boosting settings were chosen on a random fifth of the training set; the hold-out was used once.</p>
+    </div>
+    <div class="scroll"><table id="model-table"></table></div>
+    <p class="foot" id="model-note"></p>
+  </section>
+</div>
+<div id="tip" class="tip"></div>
+
+<script>
+const D = {"monthly": [{"month": "S01", "dataset": "baseline", "applications": 3000, "avg_score": 567.3226666666667, "score_psi": 0.003081179667554, "avg_pd_pct": 7.920858196880517, "actual_default_rate_pct": 7.933333333333334, "gap_pp": 0.0124751364528163, "status": "Stable"}, {"month": "S02", "dataset": "baseline", "applications": 3000, "avg_score": 567.692, "score_psi": 0.0060390805670004, "avg_pd_pct": 7.820590062762401, "actual_default_rate_pct": 7.066666666666667, "gap_pp": -0.7539233960957334, "status": "Stable"}, {"month": "S03", "dataset": "baseline", "applications": 3000, "avg_score": 566.7136666666667, "score_psi": 0.0032040746529267, "avg_pd_pct": 8.061214921147261, "actual_default_rate_pct": 8.1, "gap_pp": 0.0387850788527391, "status": "Stable"}, {"month": "S04", "dataset": "baseline", "applications": 3000, "avg_score": 567.01, "score_psi": 0.0019763220676752, "avg_pd_pct": 7.931239224809015, "actual_default_rate_pct": 7.766666666666666, "gap_pp": -0.1645725581423493, "status": "Stable"}, {"month": "S05", "dataset": "baseline", "applications": 3000, "avg_score": 566.4763333333333, "score_psi": 0.0011550982811504, "avg_pd_pct": 8.047846093241008, "actual_default_rate_pct": 7.733333333333333, "gap_pp": -0.3145127599076744, "status": "Stable"}, {"month": "S06", "dataset": "baseline", "applications": 3000, "avg_score": 566.0196666666667, "score_psi": 0.0025510790885879, "avg_pd_pct": 8.147097167015025, "actual_default_rate_pct": 8.433333333333334, "gap_pp": 0.2862361663183085, "status": "Stable"}, {"month": "S07", "dataset": "drifting", "applications": 3000, "avg_score": 565.722, "score_psi": 0.0030605121787485, "avg_pd_pct": 8.318421837964332, "actual_default_rate_pct": 8.933333333333334, "gap_pp": 0.6149114953690027, "status": "Stable"}, {"month": "S08", "dataset": "drifting", "applications": 3000, "avg_score": 563.1606666666667, "score_psi": 0.0173668680586527, "avg_pd_pct": 8.984873965359629, "actual_default_rate_pct": 9.5, "gap_pp": 0.5151260346403702, "status": "Stable"}, {"month": "S09", "dataset": "drifting", "applications": 3000, "avg_score": 560.9886666666666, "score_psi": 0.0444066159044054, "avg_pd_pct": 9.504367153807122, "actual_default_rate_pct": 9.0, "gap_pp": -0.5043671538071226, "status": "Stable"}, {"month": "S10", "dataset": "drifting", "applications": 3000, "avg_score": 559.1443333333333, "score_psi": 0.074723798810751, "avg_pd_pct": 10.110558951768764, "actual_default_rate_pct": 11.466666666666669, "gap_pp": 1.3561077148979028, "status": "Stable"}, {"month": "S11", "dataset": "drifting", "applications": 3000, "avg_score": 557.8546666666666, "score_psi": 0.1044341080008756, "avg_pd_pct": 10.479047042907649, "actual_default_rate_pct": 11.733333333333333, "gap_pp": 1.2542862904256835, "status": "Watch"}, {"month": "S12", "dataset": "drifting", "applications": 3000, "avg_score": 555.235, "score_psi": 0.1717741165985945, "avg_pd_pct": 11.17799780052509, "actual_default_rate_pct": 14.4, "gap_pp": 3.22200219947491, "status": "Watch"}], "drift_psi": {"S01": 0.0025457386820267, "S02": 0.0046958296587668, "S03": 0.0032352278444918, "S04": 0.0053850348883446, "S05": 0.0020778985141387, "S06": 0.0035216315440583, "S07": 0.0100976248342117, "S08": 0.0482996761232738, "S09": 0.0921166339819692, "S10": 0.1749162169877698, "S11": 0.2420969846659462, "S12": 0.3989501876806566}, "drift_feature": "EXT_SOURCE_2", "features": [{"feature": "EXT_SOURCE_2", "max_test": 0.3989501876806566, "months_over": 3, "status": "Major shift", "psi_whole": 0.0001910584107629}, {"feature": "EXT_SOURCE_1", "max_test": 0.0150209960673945, "months_over": 0, "status": "Stable", "psi_whole": 9.744605699908274e-05}, {"feature": "NAME_EDUCATION_TYPE", "max_test": 0.0095777323066433, "months_over": 0, "status": "Stable", "psi_whole": 3.704823538758783e-05}, {"feature": "EXT_SOURCE_3", "max_test": 0.0080969694660603, "months_over": 0, "status": "Stable", "psi_whole": 0.0001595968101086}, {"feature": "bureau_utilisation", "max_test": 0.0080767449588369, "months_over": 0, "status": "Stable", "psi_whole": 0.000135370743577}, {"feature": "YEARS_EMPLOYED", "max_test": 0.0064366409999987, "months_over": 0, "status": "Stable", "psi_whole": 5.392397235314548e-05}, {"feature": "prev_refusal_rate", "max_test": 0.0047933593416321, "months_over": 0, "status": "Stable", "psi_whole": 5.769909062569416e-05}, {"feature": "inst_recent3_late_share", "max_test": 0.0039881741885139, "months_over": 0, "status": "Stable", "psi_whole": 5.416525259428881e-06}, {"feature": "inst_late_share", "max_test": 0.0031482489212206, "months_over": 0, "status": "Stable", "psi_whole": 4.300352749189493e-05}, {"feature": "bureau_n_active", "max_test": 0.003089880974058, "months_over": 0, "status": "Stable", "psi_whole": 2.311590930155547e-05}, {"feature": "not_employed_flag", "max_test": 0.0003814608494326, "months_over": 0, "status": "Stable", "psi_whole": 6.500059171672586e-08}], "bands": [{"band": "under 500", "loans": 632, "avg_pd_pct": 28.71508905914401, "ead_m": 292.749642, "expected_loss_m": 49.38855669745992, "actual_defaults": 264, "share_of_EAD_pct": 0.5323825274047546, "share_of_EL_pct": 4.040815564339346, "EL_rate_pct": 16.87057799970253}, {"band": "500-519", "loans": 3433, "avg_pd_pct": 17.897398285590636, "ead_m": 1629.7586235, "expected_loss_m": 166.43024267239898, "actual_defaults": 994, "share_of_EAD_pct": 2.96381238627996, "share_of_EL_pct": 13.616796277061322, "EL_rate_pct": 10.211956560473997}, {"band": "520-539", "loans": 10589, "avg_pd_pct": 10.07308217235056, "ead_m": 5329.631673, "expected_loss_m": 301.42948064839663, "actual_defaults": 1888, "share_of_EAD_pct": 9.692250213608016, "share_of_EL_pct": 24.662007120718524, "EL_rate_pct": 5.655728184284165}, {"band": "540-559", "loans": 21036, "avg_pd_pct": 5.3358737404445575, "ead_m": 11477.6321535, "expected_loss_m": 337.76170106914225, "actual_defaults": 2166, "share_of_EAD_pct": 20.87275247462952, "share_of_EL_pct": 27.63459452922457, "EL_rate_pct": 2.942782069959829}, {"band": "560-579", "loans": 26915, "avg_pd_pct": 2.732961666606444, "ead_m": 16225.6117905, "expected_loss_m": 242.20861862104297, "actual_defaults": 1433, "share_of_EAD_pct": 29.50723408131367, "share_of_EL_pct": 19.816743419663037, "EL_rate_pct": 1.492754921961431}, {"band": "580-599", "loans": 19951, "avg_pd_pct": 1.4072613775354772, "ead_m": 13015.2625335, "expected_loss_m": 99.51892915078676, "actual_defaults": 557, "share_of_EAD_pct": 23.66902420472008, "share_of_EL_pct": 8.142324148532285, "EL_rate_pct": 0.7646325142857078}, {"band": "600 and over", "loans": 9698, "avg_pd_pct": 0.6739496107878513, "ead_m": 7017.942978, "expected_loss_m": 25.504761368505285, "actual_defaults": 146, "share_of_EAD_pct": 12.762544112044004, "share_of_EL_pct": 2.086718940460909, "EL_rate_pct": 0.3634221800954805}], "stress": [{"scenario": "Base", "score_shift": 0, "lgd_add_on_pp": 0.0, "revolving_ccf": 0.75, "avg_pd_pct": 4.408143929284006, "total_ead_m": 54988.589394, "expected_loss_m": 1222.2422902277326, "EL_rate_pct": 2.2227198473309007, "EL_vs_base_pct": 0.0}, {"scenario": "Moderate", "score_shift": -10, "lgd_add_on_pp": 5.0, "revolving_ccf": 0.85, "avg_pd_pct": 5.926298644226308, "total_ead_m": 55128.050019, "expected_loss_m": 1780.2120754198927, "EL_rate_pct": 3.2292309900428893, "EL_vs_base_pct": 45.65132377216281}, {"scenario": "Severe", "score_shift": -20, "lgd_add_on_pp": 10.0, "revolving_ccf": 1.0, "avg_pd_pct": 7.866439289303948, "total_ead_m": 55337.2409565, "expected_loss_m": 2554.0715038731555, "EL_rate_pct": 4.615465931669566, "EL_vs_base_pct": 108.966055608931}], "sens": [{"lgd_case": "low", "ccf_case": "low", "expected_loss_m": 944.0193466287096, "vs_central_pct": -22.763321628086}, {"lgd_case": "low", "ccf_case": "central", "expected_loss_m": 948.3583405703032, "vs_central_pct": -22.40831886175354}, {"lgd_case": "low", "ccf_case": "high", "expected_loss_m": 952.6973345118968, "vs_central_pct": -22.05331609542107}, {"lgd_case": "central", "ccf_case": "low", "expected_loss_m": 1216.8264991222438, "vs_central_pct": -0.4431029059287161}, {"lgd_case": "central", "ccf_case": "central", "expected_loss_m": 1222.2422902277326, "vs_central_pct": 0.0}, {"lgd_case": "central", "ccf_case": "high", "expected_loss_m": 1227.6580813332212, "vs_central_pct": 0.443102905928705}, {"lgd_case": "high", "ccf_case": "low", "expected_loss_m": 1489.6336516157787, "vs_central_pct": 21.87711581622862}, {"lgd_case": "high", "ccf_case": "central", "expected_loss_m": 1496.1262398851622, "vs_central_pct": 22.408318861753564}, {"lgd_case": "high", "ccf_case": "high", "expected_loss_m": 1502.6188281545458, "vs_central_pct": 22.939521907278504}], "models": [{"model": "Scorecard", "train_AUC": 0.7432274331834113, "test_AUC": 0.7405465479777146, "test_Gini": 0.4810930959554291, "test_KS": 0.3593008151567412, "train_minus_test_AUC": 0.0026808852056967, "avg_pd_test_pct": 8.095315151612589}, {"model": "GB on scorecard features", "train_AUC": 0.7562895733155519, "test_AUC": 0.7467901593205981, "test_Gini": 0.4935803186411962, "test_KS": 0.3695825048908619, "train_minus_test_AUC": 0.0094994139949537, "avg_pd_test_pct": 8.088976475279388}, {"model": "GB on all features", "train_AUC": 0.8142193171540758, "test_AUC": 0.7617448193441717, "test_Gini": 0.5234896386883434, "test_KS": 0.3936183291957966, "train_minus_test_AUC": 0.0524744978099041, "avg_pd_test_pct": 8.044280446525574}], "metrics": {"train": {"people": 215257.0, "default_rate_pct": 8.072675917624048, "avg_pd_pct": 8.072675917624046, "AUC": 0.7432274331834113, "Gini": 0.48645486636682267, "KS": 0.3630969132562311, "KS_cutoff_score": 558.1664223600558}, "test": {"people": 92254.0, "default_rate_pct": 8.073362672621242, "avg_pd_pct": 8.095315151612589, "AUC": 0.7405465479777146, "Gini": 0.48109309595542915, "KS": 0.35927723191970606, "KS_cutoff_score": 558.2430402794852}}, "calib": {"before": 8.095315151612589, "actual": 8.073362672621242}, "pd12_avg": 4.408143929284002, "score_psi_test": 0.00011312867767433323, "score_psi_max": 0.17177411659859454, "sev_mid_share": 85.47984372349958, "low_share_loans": 4.4063130053981405, "low_share_el": 17.65761184140067, "n_train": 215257, "n_test": 92254, "model_note": "Boosting on every feature scores +0.021 AUC against the scorecard (0.762 against 0.741). Given the same features as the scorecard it gains only +0.006, so most of the gain comes from extra inputs and missing-value handling, not from the model type. Its train-to-hold-out gap is also larger (0.052 against 0.003). The scorecard stays the explainable choice.", "assump": {"view": "origination", "annual_rate": 0.22, "lgd_central": {"Cash loans": 0.65, "Revolving loans": 0.75}, "lgd_band_pp": 0.15, "big_loan_add": 0.05, "revolving_drawn_share": 0.5, "ccf": {"low": 0.6, "central": 0.75, "high": 0.9}, "revolving_horizon_months": 24, "recalibration_logit_shift": 0.0, "scenarios": {"Base": [0, 0.0, 0.75], "Moderate": [-10, 0.05, 0.85], "Severe": [-20, 0.1, 1.0]}}};
+const $ = (id) => document.getElementById(id);
+const f1 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 1, maximumFractionDigits: 1});
+const f2 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const f4 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 4, maximumFractionDigits: 4});
+const f3 = (x) => x.toLocaleString("en-US", {minimumFractionDigits: 3, maximumFractionDigits: 3});
+const n0 = (x) => Math.round(x).toLocaleString("en-US");
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const mlabel = (s) => "Sim " + (+s.slice(1));
+const statusClass = (s) => s === "Stable" ? "good" : (s === "Watch" ? "warn" : "crit");
+const pill = (s) => `<span class="pill ${statusClass(s)}">${s === "Stable" ? "&#10003;" : "&#9650;"} ${s}</span>`;
+
+/* ---------- header, hero, tiles ---------- */
+const base = D.stress[0], sev = D.stress[2];
+const A = D.assump;
+$("sub-top").textContent = `${n0(D.n_test)} real Home Credit applicants held back from model building (a random 30%), scored by a WOE logistic scorecard trained on the other ${n0(D.n_train)}. Loans are viewed at origination because the data has no dates. The drift panel is a simulation.`;
+$("chips").innerHTML = [`Score scale: 600 points at 50:1 odds`, `+20 points doubles the odds`, `Random 70/30 split`].map(t => `<span class="chip">${t}</span>`).join("");
+$("hero-el").innerHTML = `${f1(base.expected_loss_m)}<small>m</small>`;
+$("hero-sub").textContent = `${f2(base.EL_rate_pct)}% of the ${n0(base.total_ead_m)}m still exposed over the next 12 months. The severe stress takes it to ${f1(sev.expected_loss_m)}m.`;
+const lastM = D.monthly[D.monthly.length - 1];
+const te = D.metrics.test;
+const totalPsi = D.score_psi_test;
+const tiles = [
+  ["12-month PD, average", `${f1(D.pd12_avg)}%`, `Lifetime ${f1(D.calib.before)}% predicted, ${f1(D.calib.actual)}% actual`],
+  ["Hold-out AUC", f3(te.AUC), `Gini ${f3(te.Gini)}, KS ${f3(te.KS)}`],
+  ["Score PSI, hold-out vs training", f4(totalPsi), pill(totalPsi < .1 ? "Stable" : totalPsi < .25 ? "Watch" : "Major shift")],
+  ["Expected loss in the two lowest bands", `${f1(D.low_share_el)}%`, `of the total, from ${f1(D.low_share_loans)}% of the loans`],
+];
+$("tiles").innerHTML = tiles.map(t => `<div class="tile"><span class="lab">${t[0]}</span><span class="val mono">${t[1]}</span><span class="note">${t[2]}</span></div>`).join("");
+
+/* ---------- band table ---------- */
+const maxEL = Math.max(...D.bands.map(b => b.expected_loss_m));
+$("band-table").innerHTML = `<thead><tr><th>Score band</th><th>Loans</th><th>Avg PD, 12m</th><th>EAD (m)</th><th>Expected loss (m)</th><th>Loss rate</th><th>Share of loss</th></tr></thead><tbody>` +
+  D.bands.map(b => `<tr><td>${b.band}</td><td>${n0(b.loans)}</td><td>${f1(b.avg_pd_pct)}%</td><td>${f1(b.ead_m)}</td>
+  <td><div class="barcell"><div class="bar-track"><div class="bar" style="width:${100 * b.expected_loss_m / maxEL}%"></div></div><span>${f2(b.expected_loss_m)}</span></div></td>
+  <td>${f2(b.EL_rate_pct)}%</td><td>${f1(b.share_of_EL_pct)}%</td></tr>`).join("") +
+  `<tr><td><b>Total</b></td><td>${n0(D.bands.reduce((a, b) => a + b.loans, 0))}</td><td>${f1(D.pd12_avg)}%</td><td>${n0(base.total_ead_m)}</td><td><b>${f2(base.expected_loss_m)}</b></td><td>${f2(base.EL_rate_pct)}%</td><td>100.0%</td></tr></tbody>`;
+
+/* ---------- stress ---------- */
+const maxS = Math.max(...D.stress.map(s => s.expected_loss_m));
+$("stress").innerHTML = D.stress.map(s => `<div class="stress-row"><div><b>${s.scenario}</b><div class="foot">${s.score_shift === 0 ? "No change" : s.score_shift + " pts, LGD +" + s.lgd_add_on_pp + " pp"}</div></div>
+  <div class="track"><div class="fill" style="width:${100 * s.expected_loss_m / maxS}%; opacity:${s.scenario === "Base" ? 0.55 : s.scenario === "Moderate" ? 0.8 : 1}"></div></div>
+  <div class="v">${f1(s.expected_loss_m)}m <span>${s.EL_vs_base_pct === 0 ? "" : "+" + Math.round(s.EL_vs_base_pct) + "%"}</span></div></div>`).join("");
+const sg = (l, c) => D.sens.find(x => x.lgd_case === l && x.ccf_case === c);
+$("sens-table").innerHTML = `<thead><tr><th>LGD case</th><th>CCF low</th><th>CCF central</th><th>CCF high</th></tr></thead><tbody>` +
+  ["low", "central", "high"].map(l => `<tr><td>${l[0].toUpperCase() + l.slice(1)}</td>` + ["low", "central", "high"].map(c => `<td${l === "central" && c === "central" ? ' style="font-weight:600"' : ""}>${f1(sg(l, c).expected_loss_m)}</td>`).join("") + `</tr>`).join("") + `</tbody>`;
+$("stress-where").textContent = `Under the severe case, ${f1(D.sev_mid_share)}% of the extra loss lands in the 500 to 579 bands, the middle of the book.`;
+
+/* ---------- drift charts ---------- */
+const DF = D.drift_feature;
+const T = D.monthly.filter(m => m.dataset === "drifting");
+const dTest = T.map(m => D.drift_psi[m.month]);
+const nOver = dTest.filter(v => v >= 0.10).length;
+const scoreOver = T.filter(m => m.score_psi >= 0.10).length;
+$("finding").innerHTML = `<b>Simulation:</b> from month 7 the applicants are tilted toward low ${DF} values, and in months 10 to 12 extra defaults are added. The input check catches it first: ${DF} PSI reaches ${f3(Math.max(...dTest))}, over the 0.10 watch line in ${nOver} of 6 months, while the score PSI reaches ${f3(D.score_psi_max)}, over the line in ${scoreOver}. The predicted-against-actual gap opens last, to ${f1(T[T.length - 1].gap_pp)} points in month 12, which only the labels reveal. <b>Real check:</b> the hold-out against the training set gives a score PSI of ${f4(D.score_psi_test)}, as it should for two random halves of one population.`;
+$("legend1").innerHTML = `<span><i style="background:var(--accent)"></i>Actual default rate</span><span><i style="background:var(--muted-series)"></i>Predicted PD (scorecard)</span><span><i style="background:var(--shade); height:10px; width:14px; border-radius:2px; vertical-align:-1px"></i>Simulated shift</span>`;
+$("legend2").innerHTML = `<span><i style="background:var(--accent)"></i>${DF}</span><span><i style="background:var(--muted-series)"></i>Score</span><span><i style="background:var(--warn)"></i>Watch line, 0.10</span>`;
+
+const tip = $("tip");
+function showTip(host, x, y, html) {
+  const r = host.getBoundingClientRect(), t = tip;
+  t.innerHTML = html; t.classList.add("on");
+  const px = r.left + window.scrollX + x, py = r.top + window.scrollY + y;
+  tip.style.left = Math.min(Math.max(px + 12, 8), document.documentElement.clientWidth - t.offsetWidth - 8) + "px";
+  tip.style.top = (py - 8 - t.offsetHeight) + "px";
+}
+const hideTip = () => tip.classList.remove("on");
+
+function setup(host, W, H, m) {
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  return {iw, ih, X: (i, n) => m.l + (iw * (i + 0.5)) / n, Y: (v, lo, hi) => m.t + ih - ((v - lo) / (hi - lo)) * ih};
+}
+
+function drawRate() {
+  const host = $("chart-rate"), W = Math.max(host.clientWidth, 280), H = 250, m = {l: 34, r: 12, t: 10, b: 28};
+  const mo = D.monthly, n = mo.length, {iw, ih, X, Y} = setup(host, W, H, m), lo = Math.floor(Math.min(...mo.map(d => Math.min(d.avg_pd_pct, d.actual_default_rate_pct))) / 2) * 2, hi = Math.ceil(Math.max(...mo.map(d => Math.max(d.avg_pd_pct, d.actual_default_rate_pct))) / 2) * 2;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Predicted and actual default rate by month">`;
+  const t0 = mo.findIndex(x => x.dataset === "drifting");
+  const bw = iw / n;
+  s += `<rect x="${m.l + t0 * bw}" y="${m.t}" width="${bw * (n - t0)}" height="${ih}" fill="var(--shade)"/>`;
+  for (let v = lo; v <= hi; v += 2) s += `<line class="tick" x1="${m.l}" x2="${W - m.r}" y1="${Y(v, lo, hi)}" y2="${Y(v, lo, hi)}"/><text class="axis-text" x="${m.l - 6}" y="${Y(v, lo, hi) + 4}" text-anchor="end">${v}%</text>`;
+  const path = (key) => mo.map((d, i) => `${i ? "L" : "M"}${X(i, n).toFixed(1)},${Y(d[key], lo, hi).toFixed(1)}`).join("");
+  s += `<path d="${path("avg_pd_pct")}" fill="none" stroke="var(--muted-series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<path d="${path("actual_default_rate_pct")}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const last = mo[n - 1];
+  s += `<circle cx="${X(n - 1, n)}" cy="${Y(last.actual_default_rate_pct, lo, hi)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/>`;
+  s += `<circle cx="${X(n - 1, n)}" cy="${Y(last.avg_pd_pct, lo, hi)}" r="4" fill="var(--muted-series)" stroke="var(--panel)" stroke-width="2"/>`;
+  mo.forEach((d, i) => { if (i % 3 === 0) s += `<text class="axis-text" x="${X(i, n)}" y="${H - 8}" text-anchor="middle">${mlabel(d.month)}</text>`; });
+  mo.forEach((d, i) => s += `<rect data-i="${i}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`);
+  s += `</svg>`;
+  host.innerHTML = s + "";
+  host.querySelectorAll("rect[data-i]").forEach(r => {
+    const mv = (e) => { const d = mo[+r.dataset.i], b = host.getBoundingClientRect(); showTip(host, e.clientX - b.left, Y(d.actual_default_rate_pct, lo, hi) * (host.clientHeight / H), `<b>${mlabel(d.month)}</b> (${d.dataset})<br>Actual ${f1(d.actual_default_rate_pct)}%<br>Predicted ${f1(d.avg_pd_pct)}%<br>${n0(d.applications)} loans`); };
+    r.addEventListener("mousemove", mv); r.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function drawPsi() {
+  const host = $("chart-psi"), W = Math.max(host.clientWidth, 280), H = 250, m = {l: 40, r: 12, t: 10, b: 28};
+  const mo = D.monthly, n = mo.length, {iw, ih, X, Y} = setup(host, W, H, m), lo = 0, hi = Math.max(0.30, Math.ceil(Math.max(...mo.map(d => D.drift_psi[d.month])) * 10) / 10), bw = iw / n;
+  const cir = mo.map(d => D.drift_psi[d.month]);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="PSI by simulated month for the score and one input">`;
+  const t0 = mo.findIndex(x => x.dataset === "drifting");
+  s += `<rect x="${m.l + t0 * bw}" y="${m.t}" width="${bw * (n - t0)}" height="${ih}" fill="var(--shade)"/>`;
+  Array.from({length: Math.round(hi / 0.1) + 1}, (_, k) => k / 10).forEach(v => s += `<line class="tick" x1="${m.l}" x2="${W - m.r}" y1="${Y(v, lo, hi)}" y2="${Y(v, lo, hi)}"/><text class="axis-text" x="${m.l - 6}" y="${Y(v, lo, hi) + 4}" text-anchor="end">${v.toFixed(2)}</text>`);
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(0.10, lo, hi)}" y2="${Y(0.10, lo, hi)}" stroke="var(--warn)" stroke-width="1.5"/>`;
+  const path = (arr) => arr.map((v, i) => `${i ? "L" : "M"}${X(i, n).toFixed(1)},${Y(v, lo, hi).toFixed(1)}`).join("");
+  s += `<path d="${path(mo.map(d => d.score_psi))}" fill="none" stroke="var(--muted-series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<path d="${path(cir)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<circle cx="${X(n - 1, n)}" cy="${Y(cir[n - 1], lo, hi)}" r="4" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/><circle cx="${X(n - 1, n)}" cy="${Y(mo[n - 1].score_psi, lo, hi)}" r="4" fill="var(--muted-series)" stroke="var(--panel)" stroke-width="2"/>`;
+  mo.forEach((d, i) => { if (i % 3 === 0) s += `<text class="axis-text" x="${X(i, n)}" y="${H - 8}" text-anchor="middle">${mlabel(d.month)}</text>`; });
+  mo.forEach((d, i) => s += `<rect data-i="${i}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`);
+  host.innerHTML = s + `</svg>`;
+  host.querySelectorAll("rect[data-i]").forEach(r => {
+    const mv = (e) => { const d = mo[+r.dataset.i], b = host.getBoundingClientRect(), v = cir[+r.dataset.i]; showTip(host, e.clientX - b.left, Y(v, lo, hi) * (host.clientHeight / H), `<b>${mlabel(d.month)}</b><br>${DF} PSI ${f3(v)}<br>Score PSI ${f3(d.score_psi)}`); };
+    r.addEventListener("mousemove", mv); r.addEventListener("mouseleave", hideTip);
+  });
+}
+function drawAll() { drawRate(); drawPsi(); }
+drawAll();
+let rz; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(drawAll, 80); }).observe(document.querySelector(".wrap"));
+
+/* ---------- feature PSI + model tables ---------- */
+$("feat-table").innerHTML = `<thead><tr><th>Scorecard feature</th><th>PSI, hold-out vs training (real)</th><th>Highest simulated month</th><th>Simulated months over 0.10</th><th>Status</th></tr></thead><tbody>` +
+  D.features.map(f => `<tr><td>${f.feature}</td><td>${f4(f.psi_whole)}</td><td>${f3(f.max_test)}</td><td>${f.months_over} of 6</td><td style="text-align:right">${pill(f.status)}</td></tr>`).join("") + `</tbody>`;
+$("model-note").textContent = D.model_note;
+const best = Math.max(...D.models.map(m => m.test_AUC));
+$("model-table").innerHTML = `<thead><tr><th>Model</th><th>Train AUC</th><th>Test AUC</th><th>Test Gini</th><th>Test KS</th></tr></thead><tbody>` +
+  D.models.map(m => `<tr><td>${m.model}</td><td>${f3(m.train_AUC)}</td><td>${f3(m.test_AUC)}</td><td>${f3(m.test_Gini)}</td><td>${f3(m.test_KS)}</td></tr>`).join("") + `</tbody>`;
+</script>

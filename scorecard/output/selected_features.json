@@ -1,0 +1,107 @@
+[
+ {
+  "feature": "EXT_SOURCE_3",
+  "iv": 0.3355514848894005,
+  "family": "Outside score",
+  "direction": "higher value = safer",
+  "vif": 1.2082044152512874
+ },
+ {
+  "feature": "EXT_SOURCE_2",
+  "iv": 0.3010688481530949,
+  "family": "Outside score",
+  "direction": "higher value = safer",
+  "vif": 1.0681052480871127
+ },
+ {
+  "feature": "EXT_SOURCE_1",
+  "iv": 0.13952566091232,
+  "family": "Outside score",
+  "direction": "higher value = safer",
+  "vif": 1.1108342071409059
+ },
+ {
+  "feature": "YEARS_EMPLOYED",
+  "iv": 0.1151218762169839,
+  "family": "Loan and applicant",
+  "direction": "higher value = safer",
+  "vif": 1.5268554770239393
+ },
+ {
+  "feature": "AGE_YEARS",
+  "iv": 0.082158960720174,
+  "family": "Loan and applicant",
+  "direction": "higher value = safer",
+  "vif": 1.9837871351433303
+ },
+ {
+  "feature": "prev_refusal_rate",
+  "iv": 0.068113766905864,
+  "family": "Earlier applications",
+  "direction": "higher value = riskier",
+  "vif": 1.6588782996180573
+ },
+ {
+  "feature": "inst_late_share",
+  "iv": 0.0652575249861246,
+  "family": "Payment behaviour",
+  "direction": "higher value = riskier",
+  "vif": 1.5288877302308248
+ },
+ {
+  "feature": "inst_recent3_late_share",
+  "iv": 0.0622989594100119,
+  "family": "Payment behaviour",
+  "direction": "higher value = riskier",
+  "vif": 1.5162879410746448
+ },
+ {
+  "feature": "bureau_utilisation",
+  "iv": 0.053981858195995,
+  "family": "Bureau",
+  "direction": "higher value = riskier",
+  "vif": 1.0576865546145289
+ },
+ {
+  "feature": "bureau_n_recent_loans",
+  "iv": 0.0519346537604004,
+  "family": "Bureau",
+  "direction": "higher value = riskier",
+  "vif": 1.4377336370743914
+ },
+ {
+  "feature": "NAME_EDUCATION_TYPE",
+  "iv": 0.0501496223053364,
+  "family": "Loan and applicant",
+  "direction": "categories",
+  "vif": 1.0798961385741104
+ },
+ {
+  "feature": "prev_last_refused",
+  "iv": 0.0374423809188439,
+  "family": "Earlier applications",
+  "direction": "higher value = riskier",
+  "vif": 1.6506412916938897
+ },
+ {
+  "feature": "AMT_CREDIT",
+  "iv": 0.0324573190326558,
+  "family": "Loan and applicant",
+  "direction": "higher value = safer",
+  "vif": 1.060049115932505
+ },
+ {
+  "feature": "not_employed_flag",
+  "iv": 0.0323688535495316,
+  "family": "Loan and applicant",
+  "direction": "higher value = safer",
+  "vif": 1.8719952514354858
+ },
+ {
+  "feature": "bureau_n_active",
+  "iv": 0.0254163630790628,
+  "family": "Bureau",
+  "direction": "higher value = riskier",
+  "vif": 1.4073358042011588
+ }
+]

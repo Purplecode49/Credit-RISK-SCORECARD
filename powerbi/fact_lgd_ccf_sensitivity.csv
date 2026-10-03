@@ -1,0 +1,10 @@
+lgd_case,ccf_case,expected_loss_m,vs_central_pct
+low,low,944.019347,-22.763322
+low,central,948.358341,-22.408319
+low,high,952.697335,-22.053316
+central,low,1216.826499,-0.443103
+central,central,1222.24229,0.0
+central,high,1227.658081,0.443103
+high,low,1489.633652,21.877116
+high,central,1496.12624,22.408319
+high,high,1502.618828,22.939522

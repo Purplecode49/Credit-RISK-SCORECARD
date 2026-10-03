@@ -1,0 +1,12 @@
+feature,psi_test_vs_train,status
+EXT_SOURCE_2,0.00019105841076294658,Stable
+EXT_SOURCE_3,0.0001595968101086439,Stable
+bureau_utilisation,0.00013537074357707873,Stable
+EXT_SOURCE_1,9.744605699908274e-05,Stable
+prev_refusal_rate,5.7699090625694155e-05,Stable
+YEARS_EMPLOYED,5.392397235314548e-05,Stable
+inst_late_share,4.300352749189493e-05,Stable
+NAME_EDUCATION_TYPE,3.704823538758783e-05,Stable
+bureau_n_active,2.311590930155547e-05,Stable
+inst_recent3_late_share,5.416525259428881e-06,Stable
+not_employed_flag,6.500059171672585e-08,Stable

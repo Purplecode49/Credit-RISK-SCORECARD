@@ -1,0 +1,40 @@
+feature,iv,n_bins,has_missing_bin,strength
+EXT_SOURCE_3,0.3355514848894005,9,True,strong
+EXT_SOURCE_2,0.3010688481530949,9,True,strong
+EXT_SOURCE_1,0.13952566091232002,6,True,medium
+YEARS_EMPLOYED,0.11512187621698391,9,True,medium
+AGE_YEARS,0.08215896072017403,8,False,weak
+prev_refusal_rate,0.06811376690586401,6,True,weak
+inst_late_share,0.06525752498612467,6,True,weak
+inst_recent3_late_share,0.062298959410011935,3,True,weak
+prev_n_refused,0.055059785910961286,4,False,weak
+bureau_utilisation,0.05398185819599508,8,True,weak
+inst_avg_days_late,0.052807120966892565,6,True,weak
+inst_short_share,0.05242123370445539,5,True,weak
+bureau_n_recent_loans,0.051934653760400476,4,False,weak
+NAME_EDUCATION_TYPE,0.050149622305336476,4,False,weak
+inst_max_days_late,0.04072773137381292,6,True,weak
+inst_n_late,0.03820726286432035,5,False,weak
+prev_last_refused,0.03744238091884395,3,True,weak
+AMT_CREDIT,0.032457319032655835,4,False,weak
+not_employed_flag,0.032368853549531666,2,False,weak
+bureau_n_active,0.025416363079062844,5,False,weak
+NAME_CONTRACT_TYPE,0.015228751798830698,2,False,not useful
+prev_approved_credit,0.014678089653041203,8,False,not useful
+AMT_ANNUITY,0.01307644179985945,4,True,not useful
+bureau_n_loans,0.012848387943852499,4,False,not useful
+prev_n_approved,0.012761103956328668,4,False,not useful
+bureau_max_overdue_days,0.011664228915997011,2,True,not useful
+has_bureau,0.011664228915997011,2,False,not useful
+prev_n_apps,0.010474069630976917,7,False,not useful
+bureau_active_debt,0.009611650749256632,7,False,not useful
+AMT_INCOME_TOTAL,0.009447052954364578,6,False,not useful
+annuity_income_ratio,0.006325335498679476,8,True,not useful
+prev_n_canceled,0.005213109895611262,4,False,not useful
+has_prev,0.0050440260891437124,2,False,not useful
+has_payments,0.00476219394204999,2,False,not useful
+inst_n_payments,0.004507388595055968,6,False,not useful
+credit_income_ratio,0.0035540605926169676,5,False,not useful
+bureau_active_credit,0.0012958552083557695,4,False,not useful
+bureau_n_overdue,6.888880561333299e-10,1,False,not useful
+bureau_sum_overdue_amt,6.888880561333299e-10,1,False,not useful

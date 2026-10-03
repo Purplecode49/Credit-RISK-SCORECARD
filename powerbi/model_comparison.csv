@@ -1,0 +1,4 @@
+model,train_AUC,test_AUC,test_Gini,test_KS,train_minus_test_AUC,avg_pd_test_pct
+Scorecard,0.743227,0.740547,0.481093,0.359301,0.002681,8.095315
+GB on scorecard features,0.75629,0.74679,0.49358,0.369583,0.009499,8.088976
+GB on all features,0.814219,0.761745,0.52349,0.393618,0.052474,8.04428
