@@ -1,0 +1,11 @@
+# raw Kaggle data and the database built from it (competition rules: do not republish)
+data/*
+!data/README.md
+*.duckdb
+# loan-level files derived from the Kaggle data
+scorecard/output/scores.csv
+scorecard/output/expected_loss_loans.csv
+scorecard/output/gb_test_predictions.csv
+powerbi/fact_loans.csv
+__pycache__/
+.DS_Store
